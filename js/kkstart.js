@@ -1,18 +1,24 @@
 // OVERRIDE THESE METHODS ///////////////
-function onJump() { $(".kinectStatus").innerHTML("Jump").fadeOut(1000); }
-function onReachIn() { $(".kinectStatus").innerHTML("Reach In").fadeOut(1000); }
-function onReachOut() { $(".kinectStatus").innerHTML("Reach Out").fadeOut(1000); }
-function onWaveHand() { $(".kinectStatus").innerHTML("Wave Hand").fadeOut(1000); }
-function onPlayerFound(num) { $(".kinectStatus").innerHTML( num + " player found").fadeOut(1000); }
-function onPlayerLost(num) { $(".kinectStatus").innerHTML("Player lost").fadeOut(1000); }
-function onSwipeLeft(hand) { $(".kinectStatus").innerHTML("Swipe Left (" + hand + ")").fadeOut(1000); }
-function onSwipeRight(hand) { $(".kinectStatus").innerHTML("Swipe Right (" + hand + ")").fadeOut(1000); }
-function onSwipeUp(hand) { $(".kinectStatus").innerHTML("Swipe Up (" + hand + ")").fadeOut(1000); }
-function onSwipeDown(hand) { $(".kinectStatus").innerHTML("Swipe Down (" + hand + ")").fadeOut(1000); }
+function onJump(player) {}
+function onLean(direction, leg, player) {}
+function onTurn(direction, player) {}
+function onReachIn(player) {}
+function onReachOut(player) {}
+function onWaveHand(status, player) {}
+function onPlayerCountChange(count) {}
+function onSwipeLeft(hand, player) {}
+function onSwipeRight(hand, player) {}
+function onSwipeUp(hand, player) {}
+function onSwipeDown(hand, player) {}
+function onConnected() {}
+function onDisconnected() {}
+function onHandMove(hand, x, y) {} // todo: add z coordinate and track diff players
 ///////////////////////////////////////
 
+var kks_leftHandLoc = {x:0, y:0};
+var kks_rightHandLoc = {x:0, y:0};
+
 document.addEventListener( 'DOMContentLoaded', function() {
-    $(".kinectStatus").fadeOut(1000);
 
     kinect.setUp({
         players  	: 1,
@@ -20,49 +26,86 @@ document.addEventListener( 'DOMContentLoaded', function() {
         meters	 	: false,
         sensitivity	: 1.0,
         joints	 	: [ 'HAND_RIGHT', 'HAND_LEFT' ],
-        gestures 	: [ 'HANDS_DIST', 'SWIPE', 'JUMP', 'ESCAPE' ]
+        gestures 	: [ 'HANDS_DIST', 'SWIPE', 'JUMP', 'ESCAPE', 'FOOT_LEAN', 'BODY_ANGLE' ]
     }).onMessage( function( e ) {
             var coords = this.coords;
             var left = coords[0][1];
             var right = coords[0][0];
-            draw(left.x, left.y, "left");
-            draw(right.x, right.y, "right");
+            if (left.x != kks_leftHandLoc.x || left.y != kks_leftHandLoc.y) {
+                onHandMove("left", left.x, left.y);
+            }
+            if (right.x != kks_rightHandLoc.x || right.y != kks_rightHandLoc.y) {
+                onHandMove("right", right.x, right.y);
+            }
         });
 
-//adding notifications on connection status
-    kinect.addEventListener('openedSocket', function() { this.notif.push( "CONNECTED" ); });
-    kinect.addEventListener('closedSocket', function() { this.notif.push( "DISCONNECTED" ) });
-    kinect.addEventListener('gestureSwipe', onSwipe);
-    kinect.addEventListener('gestureJump', onJump);
-    kinect.addEventListener('gestureEscape', onWaveHand);
-    kinect.addEventListener('gestureCrank_ON', onReachIn );
-    kinect.addEventListener('gestureCrank_OFF', onReachOut );
+    kinect.addEventListener('openedSocket', onConnected);
+    kinect.addEventListener('closedSocket', onDisconnected);
+    kinect.addEventListener('playerFound', _onKDSKPlayerChangeHandler);
+    kinect.addEventListener('playerLost', _onKDSKPlayerChangeHandler);
+    kinect.addEventListener('gestureSwipe', _onKJSKStartSwipeHandler);
+    kinect.addEventListener('gestureJump', _onKDSKStartJumpHandler);
+    kinect.addEventListener('gestureFootLean', _onKDSKStartLeanHandler);
+    kinect.addEventListener('gestureBodyTurning', _onKDSKStartTurnHandler)
+    kinect.addEventListener('gestureEscape', _onKDSKStartWaveHandler);
+    kinect.addEventListener('gestureCrank_ON', _onKDSKReachInHandler );
+    kinect.addEventListener('gestureCrank_OFF', _onKDSKReachOutHandler );
+    kinect.sessionPersist().modal.make('js/knctModal.css').notif.make();
 
-//adding notifications on player detection/loss
-    kinect.addEventListener('playerFound', function( count ) {
-        this.notif.push( "PLAYER FOUND. Total : " + count[ 0 ] );
-        onPlayerFound(count);
-    });
-    kinect.addEventListener('playerLost', function( count ) {
-        this.notif.push( "PLAYER LOST. Total : " + count[ 0 ] );
-        onPlayerLost(count);
-    });
-
-    kinect
-        .sessionPersist()
-        .modal.make( 'js/knctModal.css' )
-        .notif.make();
 }, false);
 
-function onSwipe(args) {
+
+function _onKDSKPlayerChangeHandler(args) {
+    onPlayerCountChange(args[0]);
+}
+
+function _onKDSKReachInHandler(args) {
+    onReachIn(args[0]);
+}
+
+function _onKDSKReachOutHandler(args) {
+    onReachOut(args[0]);
+}
+
+function _onKDSKStartTurnHandler(args) {
+    onTurn(args[1], args[0]);
+}
+
+function _onKDSKStartLeanHandler(args) {
+    onLean(args[2], args[1], args[0]);
+}
+
+function _onKDSKStartJumpHandler(args) {
+    onJump(args[0]);
+}
+
+function _onKDSKStartWaveHandler(args) {
+    var status;
+    if (args[1] == true)  {
+        status = "starting";
+    } else {
+        status = "finished;"
+    }
+    onWaveHand(status, args[0]);
+}
+
+function _onKJSKStartSwipeHandler(args) {
     var direction = args[2];
+
+    var hand = "unknown";
+    if (args[1] == 7) {
+        hand = "left";
+    } else if (args[1] == 11) {
+        hand = "right";
+    }
+
     if (direction == "left") {
-        onSwipeLeft();
+        onSwipeLeft(hand, args[0]+1);
     } else if (direction == "right")  {
-        onSwipeRight();
+        onSwipeRight(hand, args[0]+1);
     } else if (direction == "top")  {
-        onSwipeUp();
+        onSwipeUp(hand, args[0]+1);
     } else if (direction == "bottom")  {
-        onSwipeDown();
+        onSwipeDown(hand, args[0]+1);
     }
 }

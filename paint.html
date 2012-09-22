@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>Kinect Paint</title>
+
+        <script src="js/kkstart.js"></script>
+        <script src="js/kinect.js"></script>
+        <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+
+        <script type="text/javascript">
+
+            var lastLeft = null;
+            var lastRight = null;
+            var canDraw = false; // MUST REACH IN WITH BOTH ARMS TO DRAW
+
+            $(document).ready( function() {
+                canvas = document.getElementById('kinectpaint');
+                window.ctx = canvas.getContext('2d');
+                window.ctx.lineWidth = 5;
+            });
+
+            function onReachIn(player) { canDraw = true; }
+            function onReachOut(player) { canDraw = false; }
+            function onSwipeRight() { window.ctx.clearRect (0, 0, 1200, 1200); }
+
+            function onHandMove(hand, x, y) {
+                y *=3; x *=3; y += 400;
+
+                if (hand == "right") { x+=500; } else { x+=300; }
+                if (hand == "left" && lastLeft == null) { lastLeft = {x: x, y: y}; return; }
+                if (hand == "right" && lastRight == null) { lastRight = {x: x, y: y}; return; }
+
+                if (!canDraw) { return; }
+
+                if (hand == "left") {
+                    window.ctx.strokeStyle = "#00ff00";
+                    window.ctx.beginPath();
+                    window.ctx.moveTo(lastLeft.x, lastLeft.y);
+                    lastLeft.x = x;
+                    lastLeft.y = y;
+                } else {
+                    window.ctx.strokeStyle = "#0000ff";
+                    window.ctx.beginPath();
+                    window.ctx.moveTo(lastRight.x, lastRight.y);
+                    lastRight.x = x;
+                    lastRight.y = y;
+                }
+
+                window.ctx.lineTo(x, y);
+                window.ctx.closePath();
+                window.ctx.stroke();
+            }
+        </script>
+    </head>
+    <body>
+        <canvas width="1200" height="1200" id="kinectpaint" />
+    </body>
+</html>

@@ -1,0 +1,46 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>KinectJS Kickstart</title>
+    <script src="js/kkstart.js"></script>
+    <script src="js/kinect.js"></script>
+    <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+
+    <script type="text/javascript">
+        function onHandMove(whichhand, x, y) { $("#kinect" + whichhand + "Hand").html(whichhand + " x:" + x + " y: " + y); }
+        function onJump(player) { kinect.notif.push("Jump"); }
+        function onLean(direction, leg, player) { $("#kinectLean").html("Leaning " + direction + " with " + leg + " leg"); }
+        function onTurn(direction, player) { $("#kinectTurn").html("Turning " + direction);  }
+        function onReachIn(player) { kinect.notif.push("Reach in"); }
+        function onReachOut(player) { kinect.notif.push("Reach out"); }
+        function onWaveHand(status, player) { kinect.notif.push("Wave hand " + status); }
+        function onPlayerCountChange(count) { kinect.notif.push( "Total players : " + count ); }
+        function onSwipeLeft(hand, player) { kinect.notif.push( "Swipe Left with " + hand); }
+        function onSwipeRight(hand, player) { kinect.notif.push( "Swipe Right with " + hand); }
+        function onSwipeUp(hand, player) { kinect.notif.push( "Swipe Up with " + hand); }
+        function onSwipeDown(hand, player) { kinect.notif.push( "Swipe Down with " + hand); }
+        function onConnected() { kinect.notif.push( "Kinect Connected"); }
+        function onDisconnected() { kinect.notif.push( "Kinect Disconnected"); }
+    </script>
+
+    <style type="text/css">
+        .kinectStatus {
+            font-size: 32px;
+        }
+    </style>
+</head>
+
+    <body>
+        <br /><br /><br /><br /><br /><br />
+        <span id="kinectPlayers" class="kinectStatus">Waiting for Player Info...</span>
+        <br />
+        <span id="kinectLean" class="kinectStatus">Waiting for Lean Info...</span>
+        <br />
+        <span id="kinectTurn" class="kinectStatus">Waiting for Turn Info...</span>
+        <br />
+        <span id="kinectleftHand" class="kinectStatus">Waiting for Hand Info...</span>
+        <br />
+        <span id="kinectrightHand" class="kinectStatus">Waiting for Hand Info...</span>
+    </body>
+
+</html>
